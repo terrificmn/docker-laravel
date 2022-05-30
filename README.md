@@ -30,8 +30,8 @@ cd ~/Workspace
 git clone https://github.com/terrificmn/docker-laravel.git
 ```
 
-.env 파일의 사용해서 설정 변경 후 사용
-- 서버 적용시 WEB_PORT 를 80, local에서는 8000 (optional)    
+.env-example 파일을 카피한 후 수정해서 사용해야함   
+- 서버 적용시 WEB_PORT 를 80, local에서는 8000 or 다른포트 번호(optional)    
 - DB 비번 등 확인 후 build 할 것 (처음 빌드하고 만들어질 때 db등이 생성되므로)   
 
 mysqldata 디렉토리가 없다면 만들어 준다   
@@ -43,16 +43,35 @@ mkdir mysqldata
 
 <br/>
 
-## docker-compose.yml 파일, .env 파일 수정하기 (로컬 개발시)
+## .env 파일 카피 및 수정하기 
+기존의 .env파일을 수정하는 것에서 .gitignore에 추가시킴 - May31 2022   
+
+먼저 .env-example 파일을 복사 한후 수정해서 사용   
+```
+cp .env-example .env
+``` 
+
+.env파일은 DB관련 패스워드, 아이디 등을 적어주는데
+최초 빌드시에 데이터베이스, 유저등이 만들어 주므로 필히 확인하여 변경해주자~
+
+파일을 열어서 자신의 db내용으로 수정
+```
+vi .env
+```
+
+<br/>
+
+## local에서 개발할 때
 local에서 개발할 때에는 docker-compose.yml 파일의 npm 의 command를 주석해제하고 사용할 것    
 그래야 Laravel Mix가 계속 compile을 해서 tailwindcss가 바로바로 적용이 됨   
 
 ```
 command: ['run', 'watch'] 
 ```
-단, 서버쪽에서는 더 이상 컴파일해줄 필요가 없기 때문에, 주석처리
+단, 서버쪽에서는 더 이상 컴파일해줄 필요가 없기 때문에, 주석처리되어 있음   
 
-> 
+로컬에서 작업할 때 해당 라인을 주석을 해제한 후 `docker-compose build`를 해준다  
+
 또는 터미널을 새로 열어서 도커 컨테이너를 실행시키는 방법도 있다
 ```
 docker-compose run --rm npm run watch
@@ -61,10 +80,7 @@ docker-compose run --rm npm run watch
 > ^c (컨트롤+c)를 눌러서 종료하게 되면 더이상 컴파일을 하지않는다.   
 백그라운드에서 계속 돌아가야하는데 종료가 되서 그런듯 하다   
 
-.env파일은 DB관련 패스워드, 아이디 등을 적어주는데   
-최초 빌드시에 데이터베이스, 유저등이 만들어 주므로 필히 확인하여 변경해주자~
-
-로컬에서 작업 하려면 포트번호는 8000으로 하는 것을 추천
+로컬에서 작업 하려면 포트번호는 8000이나 다른 무작위 번호로 하는 것을 추천
 
 <br/>
 
@@ -88,13 +104,14 @@ docker-compose up
 자신의 라라벨 프로젝트를 깃허브를 통해 클론해서 받습니다.  
 그리고 그 라라벨 디렉토리명을 src로 바꿔준다
 
-자신의 프로젝트 내에 .env.example 파일을 .env 로 카피해서 DB등의 비번을 입력해서 저장해준다   
+자신의 라라벨 프로젝트 내에 .env.example 파일을 .env 로 카피해서 DB등의 비번을 입력해서 저장해준다   
+(Dockerfile이 있던 .env 파일과는 다른 파일임에 주의)
 ```
 cd src
 cp .env.example .env
 ```
-상위 디렉토리 내의 docker 환경변수를 정의한 .env 파일 (다른파일임에 주의)에서   
-지정한 패스워드, db등을 똑같이 입력해줍니다
+상위 디렉토리 내의 docker 환경변수를 정의한 .env 파일에서 설정한 내용을   
+라라벨 프로젝트 내의 .env파일에도 똑같이 지정한 패스워드, db등을 똑같이 입력해줍니다   
 ```
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
