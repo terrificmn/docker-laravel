@@ -22,8 +22,8 @@ services:
     build:  
       context: .
       dockerfile: Dockerfile 
-    ports: 
-      - "9000:9000"
+    #ports: 
+      # - "9000:9000"   //9000 오픈 안하기 (취약성이 있을 수 있음)
     networks:
       - laravel
 
@@ -94,7 +94,7 @@ services:
       - laravel
     restart: always
     ports:
-      - "8080:80"
+      - "9889:80"  #변경
     environment:
       - PMA_ARBITRARY=1
       - PMA_HOST= mysql
