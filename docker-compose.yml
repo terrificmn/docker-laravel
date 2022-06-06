@@ -5,16 +5,28 @@ services:
     image: nginx:latest
     container_name: nginx
     ports: 
-      - "${WEB_PORT}:80"  #for local #서버일 환경변수 80으로 변경
+      - ${WEB_PORT}:80  #for local #서버일 환경변수 80으로 변경
+      - 443:443
+    restart: always
     volumes: 
         - ./default.conf:/etc/nginx/conf.d/default.conf  #최상위 디렉토리에 default.conf만들기
         - ./src:/var/www/html  # src 디렉토리도 생성한다해서 도커 nginx 서버와 매칭
+        - ./certbot/www:/var/www/certbot/:ro  #:ro는 read only #certbot ssl인증을 위해서 인증이 필요없을 시 주석
+        - ./certbot/conf/:/etc/nginx/ssl/:ro
     depends_on:
       - php
       - mysql
     networks:
       - laravel
   
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    networks:
+      - laravel
+
   php:
     container_name: php
     volumes:
@@ -75,7 +87,7 @@ services:
     container_name: mysql
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PWD}  # .env
       MYSQL_DATABASE: ${MYSQL_DB_NAME}
@@ -94,7 +106,7 @@ services:
       - laravel
     restart: always
     ports:
-      - "9889:80"  #변경
+      - 9889:80  #변경
     environment:
       - PMA_ARBITRARY=1
       - PMA_HOST= mysql
