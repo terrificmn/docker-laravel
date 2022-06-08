@@ -1,21 +1,48 @@
 # docker-laravel 
-기존의 라라벨로 만든 프로젝트를 사용하기 위한 도커 입니다
+기존의 라라벨 프레임워크와 php로 만든 프로젝트를 사용하기 위한 도커 입니다.   
+(뉴 프로젝트도 가능합니다.)
+
+스스로 공부하면서 업데이트 하므로 에러가 있을 수 있습니다. 
 
 Docker로 PHP, laravel 프레임워크, db 등을 포함하여   
 블로그를 만들기 위해 docker 사용
 
-- nginx
-- php
-- composer
-- node
-- mariadb
-- phpmyadmin
-- artisan
+<b/>
+
+## 현재 버전 정보
+대부분은 컨테이너가 latest로 설정이 되어 있어서 docker-build 시 최신 이미지로 다운을 받습니다  
+npm컨테이너만 16.13으로 고정   
+
+현재 08Jun 2022 버전 정보
+- web (nginx)  
+    latest 1.21.6
+
+- php  
+    php:fpm (latest)  8.1.6
+
+- composer  
+    latest  2.3.5
+
+- npm (node)  
+    16.13(node)   (npm버전 8.1.2)
+
+- mysql (mariadb)  
+    latest 10.8.3-MariaDB
+
+- phpmyadmin  
+    (5.2버전)
+
+- artisan  
+    laravel 9.14.1
+
+- certbot (추가)   
+    latest  1.27.0
 
 등의 컨테이너로 구성되어 있음
 
+
 사용하고 있는 라라벨 프로젝트를 복사하거나 깃 클론을 하여 사용을 하되   
-프로젝트의 디렉토리를 src 로 변경해야함 (또는 docker-compose.yml에서 php 볼륨을 연결하는 디렉토리명 변경)
+프로젝트의 디렉토리를 대개 (app으로 시작) src 로 변경해야함 (또는 docker-compose.yml에서 php 볼륨을 연결하는 디렉토리명 변경)
 
 <br/>
 
@@ -54,6 +81,8 @@ cp .env-example .env
 .env파일은 DB관련 패스워드, 아이디 등을 적어주는데
 최초 빌드시에 데이터베이스, 유저등이 만들어 주므로 필히 확인하여 변경해주자~
 
+그리고 비번 등은 깃허브에 안 올라가므로 안심 (.gitignore 등록됨)
+
 파일을 열어서 자신의 db내용으로 수정
 ```
 vi .env
@@ -81,6 +110,30 @@ docker-compose run --rm npm run watch
 백그라운드에서 계속 돌아가야하는데 종료가 되서 그런듯 하다   
 
 로컬에서 작업 하려면 포트번호는 8000이나 다른 무작위 번호로 하는 것을 추천
+
+<br/>
+
+### local에서 개발할 때 - web nginx 컨테이너 볼륨 부분 설정
+Jun 2022 추가 됨~  서버에서 배포해서 사용할 때 Https 인증 관련해서   
+certbot let's encrypt client 프로그램이 (컨테이너) 추가되서   
+nginx의 설정파일인 default.conf 파일은 default_prod.conf, default_dev.conf 로 각각 업데이트 됨
+
+먼저 로컬에서는 docker-compose.yml 파일의 설정을 아래처럼 첫 번째 줄을 주석처리 하고 사용 할 것
+```yml
+web:
+    image: nginx:latest
+    ...생략...
+    volumes: 
+        #- ./nginx_conf/default_prod.conf:/etc/nginx/conf.d/default.conf  # 서버에서 prod 으로 사용하기-주석해제 후 아래의 default_dev는 주석처리
+        - ./nginx_conf/default_dev.conf:/etc/nginx/conf.d/default.conf  ## local에서 dev사용
+```
+
+서버에서 배포해서 사용할 때에는 첫 번째 default_prod.conf 파일을 연결해주고, 두 번째줄을 주석처리 하면 됨
+
+> 단, 서버에서 최초 certbot 컨테이너를 통해서 인증을 받을 때는 http://도메인.com 이 작동을 해야하므로   
+default_dev.conf 파일이 연결된 채로 사용을 해서 인증서를 발급을 받은 후에   
+default_prod.conf 부분을 주석해제하고 사용, (두번째는 주석처리)   
+docker-compose build 가 필요함
 
 <br/>
 
@@ -188,6 +241,78 @@ docker-compose up
 ```
 
 브라우저에 localhost:8000 입력을 해주면 라라벨이 잘 작동하는 것을 볼 수 있다
+
+> 서버에서는 .env WEB_PORT=80 그대로 사용해주면 된다
+
+<br/>
+
+## https 인증 받기
+[https 최초 인증 받기 관련해서는 여기 다시 보기](#local에서-개발할-때---web-nginx-컨테이너-볼륨-부분-설정)  
+
+최초에는 http에서도 A 도메인과 사이트가 제대로 동작을 해야하기 때문에    
+일단은 기존 docker-comopse.yml 파일의 nginx 컨테이너의 volume에서 default_dev.conf 파일과 연결을   
+해둔 상태에서 진행한다
+
+먼저 필수 조건은
+1. 도메인 네임이 있어야 한다.  
+    유로로 구입을 하거나 무료로 도메인 네임이 있어야 한다  
+    유료: GoDaddy, namecheap  
+    무료: freenom  (.tk 같은 도메인)  
+
+2. 서버의 A DNS A Record 에 서버 public IP로 지정되어 있어야 한다   
+    구입한 도메인네임에서 서버의 name server가 지정    
+    서버에서는 name server가 내 ip로 향하게 되어 있어야 함    
+
+3. 방화벽 https 443이 열려있어야 함
+
+
+대충 이 정도 인 듯 하다. 
+
+이제 certbot 컨테이너로 통해서 실행 (최초 인증받을 때)
+```
+docker-compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot/ -d example.com
+```
+-d 옵션 이하 example.com은 자신의 도메인으로 수정해준다
+
+> 옵션 certonly는 인스톨 없이 인증서를 생성  
+--webroot 은 nginx의 웹서버를 이용   
+--webroot-path 는 challenges를 위한 certbot의 루트 디렉토리  
+-d 옵션은 도메인 이름 (인증을 받은 대상)
+
+email 주소와 동의를 Y해서 입력한다면 발급을 시작한다.
+
+### 발급 성공 후 
+발급이 성공적으로 끝났다면.   
+docker-compose.yml 파일의 nginx 컨테이너에서  
+volumes 부분에서 default_dev.conf 와 연결 되어 있던 부분을 주석처리 해주고 
+default_prod.conf를 주석 해제 후 사용하면 된다 
+
+docker-compose.yml 파일 중
+```yml
+web:
+    image: nginx:latest
+    ...생략...
+    volumes: 
+        - ./nginx_conf/default_prod.conf:/etc/nginx/conf.d/default.conf  # 서버에서 prod 으로 사용하기-주석해제 후 아래의 default_dev는 주석처리
+        #- ./nginx_conf/default_dev.conf:/etc/nginx/conf.d/default.conf  ## local에서 dev사용
+```
+위에 처럼 사용
+
+이제 다시 한번 build를 해줘야 한다. 
+```
+cd ~/Workspace/docker-laravel
+docker-compose build
+```
+
+> 만약 mysqldata 쪽에서 권한 때문에 에러가 나면   
+sudo chown -R 1000:1000 mysqldata 일시적으로 권한을 바꿔주기   
+build되면 다시 소유자 바뀜
+
+docker-compose up을 해서 실행해보면 잘 되는 것 확인   
+
+이제 웹 브라우저에서 자신 도메인을 http:// 상태에서 입력하면  
+nginx는 http는 https로 돌려보내고  
+443포트로 들어온 요청에서 ssl_certificate, serificate_key를 통해서 인증이 이루어질 수 있게 된다.
 
 <br/>
 
