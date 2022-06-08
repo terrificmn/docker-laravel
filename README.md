@@ -7,7 +7,7 @@
 Docker로 PHP, laravel 프레임워크, db 등을 포함하여   
 블로그를 만들기 위해 docker 사용
 
-<b/>
+<br/>
 
 ## 현재 버전 정보
 대부분은 컨테이너가 latest로 설정이 되어 있어서 docker-build 시 최신 이미지로 다운을 받습니다  
