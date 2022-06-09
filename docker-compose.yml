@@ -9,8 +9,7 @@ services:
       - 443:443
     restart: always
     volumes: 
-        - ./nginx_conf/default_prod.conf:/etc/nginx/conf.d/default.conf  # 서버에서 prod 으로 사용하기-주석해제 후 아래의 default_dev는 주석처리
-        #- ./nginx_conf/default_dev.conf:/etc/nginx/conf.d/default.conf  ## local에서 dev사용
+        - ./nginx_conf/default_${CONF_STATUS}.conf:/etc/nginx/conf.d/default.conf  ## 서버배포시에는 prod ##로컬 개발시는 dev (env)
         - ./src:/var/www/html  # src 디렉토리도 생성한다해서 도커 nginx 서버와 매칭
         - ./certbot/www:/var/www/certbot/:ro  #:ro는 read only #certbot ssl인증을 위해서 인증이 필요없을 시 주석
         - ./certbot/conf/:/etc/letsencrypt/:ro #certbot 컨테이너에서 최초 만들어준 파일들 사용

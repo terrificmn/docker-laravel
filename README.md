@@ -78,19 +78,32 @@ mkdir mysqldata
 cp .env-example .env
 ``` 
 
-.env파일은 DB관련 패스워드, 아이디 등을 적어주는데
-최초 빌드시에 데이터베이스, 유저등이 만들어 주므로 필히 확인하여 변경해주자~
-
+1. .env파일은 DB관련 패스워드, 아이디, DB이름 등을 적어주는데  
+최초 docker-compose 빌드시에 데이터베이스, 유저등이 만들어지므로 필히 확인하여 변경해주자~ (그래야 한번에 쉽게 할 수 있음)  
 그리고 비번 등은 깃허브에 안 올라가므로 안심 (.gitignore 등록됨)
 
-파일을 열어서 자신의 db내용으로 수정
+2. CONF_STATUS 변수는 dev 또는 prod 로 지정해준다   
+로컬에서 개발을 할 때에는 dev 로 해준다  
+서버에 배포할 경우에는 prod 로 해준다. (**단, https를 사용하는 경우에 한함**)   
+80번 포트 http만 사용해서 (도메인없이) ssl 인증이 안 되어있다면 dev로 그대로 사용한다   
+(nginx 설정파일이 다르게 되어 있음)
+
+```
+CONF_STATUS=dev
+  
+  #또는
+
+CONF_STATUS=prod
+```
+
+파일을 열어서 자신의 것으로 맞게 수정하자
 ```
 vi .env
 ```
 
 <br/>
 
-## local에서 개발할 때
+## local에서 개발할 때 docker-compose.yml 파일에서
 local에서 개발할 때에는 docker-compose.yml 파일의 npm 의 command를 주석해제하고 사용할 것    
 그래야 Laravel Mix가 계속 compile을 해서 tailwindcss가 바로바로 적용이 됨   
 
@@ -111,48 +124,48 @@ docker-compose run --rm npm run watch
 
 로컬에서 작업 하려면 포트번호는 8000이나 다른 무작위 번호로 하는 것을 추천
 
+> 쿠키 등 데이터가 저장되어 있어서 css가 바로 적용이 안되는지 확인이 필요함  
+
 <br/>
 
-### local에서 개발할 때 - web nginx 컨테이너 볼륨 부분 설정
-Jun 2022 추가 됨~  서버에서 배포해서 사용할 때 Https 인증 관련해서   
-certbot let's encrypt client 프로그램이 (컨테이너) 추가되서   
-nginx의 설정파일인 default.conf 파일은 default_prod.conf, default_dev.conf 로 각각 업데이트 됨
+### local에서 개발 or 서버에 배포했을 경우 - web nginx 컨테이너 볼륨 부분 설정
+서버에서 배포해서 사용할 때 Https 인증 관련해서   
+certbot let's encrypt client 프로그램이 (컨테이너) 추가되서        
 
-먼저 로컬에서는 docker-compose.yml 파일의 설정을 아래처럼 첫 번째 줄을 주석처리 하고 사용 할 것
-```yml
-web:
-    image: nginx:latest
-    ...생략...
-    volumes: 
-        #- ./nginx_conf/default_prod.conf:/etc/nginx/conf.d/default.conf  # 서버에서 prod 으로 사용하기-주석해제 후 아래의 default_dev는 주석처리
-        - ./nginx_conf/default_dev.conf:/etc/nginx/conf.d/default.conf  ## local에서 dev사용
-```
+.env 파일에서 CONF_STATUS 값에 dev 또는 prod 값으로 바꿔서 사용할 것 -updated 09JUN 2022
+서버 배포시는 prod  
+로컬 작업시는 dev
+로 설정한다
 
-서버에서 배포해서 사용할 때에는 첫 번째 default_prod.conf 파일을 연결해주고, 두 번째줄을 주석처리 하면 됨
+### 단, 서버에서 최초 certbot 컨테이너를 통해서 인증 받는 경우  
+서버에서 최초 certbot 컨테이너를 통해서 인증을 받을 때는 http://내도메인.com 이 정상 작동을 해야   
+인증 파일을 생성을 할 수 있으므로   
 
-> 단, 서버에서 최초 certbot 컨테이너를 통해서 인증을 받을 때는 http://도메인.com 이 작동을 해야하므로   
-default_dev.conf 파일이 연결된 채로 사용을 해서 인증서를 발급을 받은 후에   
-default_prod.conf 부분을 주석해제하고 사용, (두번째는 주석처리)   
-docker-compose build 가 필요함
+.env 파일에서 CONF_STATUS=dev 저장을 해서 인증서를 발급을 받은 후에~~    
+.env 파일에서 CONF_STATUS=prod 다시 바꿔서 사용해야함
+docker-compose build 가 필요할 수 있음
+
+[최초 Let's encrypt로 인증 발급 받는 경우에는 여기로 점프해서 참고하세요](#https-인증-받기)
 
 <br/>
 
 ## docker-compose 빌드
-이제 build와 up을 차례로 실행
+.env 파일과 docker-compose.yml 파일의 설정이 마무리 되었다면  
+이제 build와 up을 차례로 실행해준다
 ```
 cd ~/Workspace/docker-laravel
 
 docker-compose build
-
+```
+그리고
+```
 docker-compose up
 ```
 
 <br/>
 
-## 자신의 프로젝트를 다운
-도커가 잘 실행되는 것을 확인했으면 컨트롤 C를 눌러서 종료  
-
-[새로운 프로젝트를 만들려면 스킵하고 여기를 클릭](#뉴-프로젝트-만들기)    
+## 자신의 프로젝트를 깃 클론해준다
+도커가 잘 실행되는 것을 확인했으면 컨트롤 C를 눌러서 종료를 해주자
 
 자신의 라라벨 프로젝트를 깃허브를 통해 클론해서 받습니다.  
 그리고 그 라라벨 디렉토리명을 src로 바꿔준다
@@ -176,6 +189,9 @@ DB_PASSWORD=
 주의할 점은 *DB_HOST*를 *mysql*로 변경해줘야한다  (docker의 mysql 컨테이너)
 
 migrate 이나 key generate 를 해야할 경우가 생길 수 있습니다.
+
+라라벨 새로운 프로젝트를 만들려면 여기를..   
+[새로운 프로젝트를 만들려면 아래는 스킵하고 여기를 클릭해서 점프](#뉴-프로젝트-만들기)    
 
 <br/>
 
@@ -247,8 +263,6 @@ docker-compose up
 <br/>
 
 ## https 인증 받기
-[https 최초 인증 받기 관련해서는 여기 다시 보기](#local에서-개발할-때---web-nginx-컨테이너-볼륨-부분-설정)  
-
 최초에는 http에서도 A 도메인과 사이트가 제대로 동작을 해야하기 때문에    
 일단은 기존 docker-comopse.yml 파일의 nginx 컨테이너의 volume에서 default_dev.conf 파일과 연결을   
 해둔 상태에서 진행한다
@@ -269,6 +283,11 @@ docker-compose up
 대충 이 정도 인 듯 하다. 
 
 이제 certbot 컨테이너로 통해서 실행 (최초 인증받을 때)
+
+먼저 위에서 설명한 것 처럼  
+**.env 파일에서 CONF_STATUS=dev** 으로 되어 있는지 확인한다.   
+최초에 http 80번 포트로 내 도메인주소가 잘 작동해야지 certbot에서 인증서 발급이 완료가 된다
+
 ```
 docker-compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot/ -d example.com
 ```
@@ -282,33 +301,28 @@ docker-compose run --rm certbot certonly --webroot --webroot-path /var/www/certb
 email 주소와 동의를 Y해서 입력한다면 발급을 시작한다.
 
 ### 발급 성공 후 
-발급이 성공적으로 끝났다면.   
-docker-compose.yml 파일의 nginx 컨테이너에서  
-volumes 부분에서 default_dev.conf 와 연결 되어 있던 부분을 주석처리 해주고 
-default_prod.conf를 주석 해제 후 사용하면 된다 
+발급이 성공적으로 끝났다면    
+본격 https에서 잘 작동할 수 있도록 nginx의 환경설정 파일을 다시 지정해줘야한다
 
-docker-compose.yml 파일 중
-```yml
-web:
-    image: nginx:latest
-    ...생략...
-    volumes: 
-        - ./nginx_conf/default_prod.conf:/etc/nginx/conf.d/default.conf  # 서버에서 prod 으로 사용하기-주석해제 후 아래의 default_dev는 주석처리
-        #- ./nginx_conf/default_dev.conf:/etc/nginx/conf.d/default.conf  ## local에서 dev사용
-```
-위에 처럼 사용
+이번에는   
+**.env 파일의 CONF_STATUS=prod** 다시 바꿔서 사용해야줘야 한다
 
-이제 다시 한번 build를 해줘야 한다. 
-```
-cd ~/Workspace/docker-laravel
-docker-compose build
-```
+> docker-compose.yml 에서 nginx 컨테이너의 불륨이 default_prod.conf 파일로 지정된다
 
-> 만약 mysqldata 쪽에서 권한 때문에 에러가 나면   
+```
+vi .env
+```
+```
+CONF_STATUS=prod
+```
+로 저장 후 빠져나온다. (docker-compose build 가 필요할 수 있음)
+
+
+> 혹시 build 시 만약 mysqldata 쪽에서 권한 때문에 에러가 나면   
 sudo chown -R 1000:1000 mysqldata 일시적으로 권한을 바꿔주기   
 build되면 다시 소유자 바뀜
 
-docker-compose up을 해서 실행해보면 잘 되는 것 확인   
+최종적으로 docker-compose up을 해서 실행해보면 잘 되는 것 확인   
 
 이제 웹 브라우저에서 자신 도메인을 http:// 상태에서 입력하면  
 nginx는 http는 https로 돌려보내고  
@@ -317,4 +331,4 @@ nginx는 http는 https로 돌려보내고
 <br/>
 
 ### gitignore
-src, mysqldata 디렉토리는 gitignore 처리
+src, mysqldata, cerbot 디렉토리는 .env 파일  
