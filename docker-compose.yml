@@ -1,9 +1,9 @@
-version: "3.9"
+# version: "3.9"
 services: 
 
   web:
     image: nginx:latest
-    container_name: nginx
+    container_name: ${COMPOSE_PROJECT_NAME}_nginx
     ports: 
       - ${WEB_PORT}:80  #for local #서버일 환경변수 80으로 변경
       - 443:443
@@ -30,7 +30,7 @@ services:
       - laravel
 
   php:
-    container_name: php
+    container_name: ${COMPOSE_PROJECT_NAME}_php
     volumes:
       - ./src:/var/www/html  #이제 php를 src 디렉토리로 연결
     build:  
@@ -43,7 +43,7 @@ services:
 
   composer:
     image: composer:latest
-    container_name: composer
+    container_name: ${COMPOSE_PROJECT_NAME}_composer
     volumes:
       - ./src:/var/www/html  
     working_dir: /var/www/html # 컨테이너 어디에 파일들이 있을 지를 결정
@@ -53,7 +53,7 @@ services:
 
   npm:
     image: node:16.13 #stable  
-    container_name: npm
+    container_name: ${COMPOSE_PROJECT_NAME}_npm
     volumes: 
       - ./src:/var/www/html
     working_dir: /var/www/html
@@ -73,7 +73,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: artisan
+    container_name: ${COMPOSE_PROJECT_NAME}_artisan
     volumes:
       - ./src:/var/www/html
     depends_on: # dependency 필요 
@@ -86,7 +86,7 @@ services:
 
   mysql:
     image: mariadb:latest
-    container_name: mysql
+    container_name: ${COMPOSE_PROJECT_NAME}_mysql
     restart: unless-stopped
     ports:
       - 127.0.0.1:3306:3306  ## 외부로 expose 안 되게 설정
@@ -103,7 +103,7 @@ services:
   
   phpmyadmin:
     image: phpmyadmin
-    container_name: phpmyadmin
+    container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
     networks: 
       - laravel
     restart: always
