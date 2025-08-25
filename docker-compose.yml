@@ -79,7 +79,7 @@ services:
     depends_on: # dependency 필요 
       - mysql
     working_dir: /var/www/html
-    entrypoint: ['/var/www/html/artisan']  
+    entrypoint: ['php', '/var/www/html/artisan'] # Added 'php' before '/var/www/html/artisan'
     networks: 
       - laravel
     # docker-compose run --rm artisan migrate 로 하면 된다!
