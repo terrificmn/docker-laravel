@@ -31,6 +31,7 @@ services:
 
   php:
     container_name: ${COMPOSE_PROJECT_NAME}_php
+    restart: always
     volumes:
       - ./src:/var/www/html  #이제 php를 src 디렉토리로 연결
     build:  
