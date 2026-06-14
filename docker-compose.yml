@@ -97,8 +97,10 @@ services:
       MYSQL_USER: ${MYSQL_USER_ID}
       MYSQL_PASSWORD: ${MYSQL_PWD}
       SERVICE_TAGS: dev 
+      TZ: Asia/Seoul
     volumes:
       - ./mysqldata:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - laravel
   
